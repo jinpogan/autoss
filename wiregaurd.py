@@ -17,6 +17,7 @@ SaveConfig = true
     f.write(a)
 with open("/etc/sysctl.conf","a") as f:
     f.write("\nnet.ipv4.ip_forward=1\nnet.ipv6.conf.all.forwarding=1")
+cmd("sudo sysctl -p")
 interface  = os.popen('ip route list default').readlines()[0]
 interface=interface[interface.find("dev"):interface.find("proto")].replace(" ","")
 
