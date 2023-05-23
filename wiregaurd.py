@@ -19,17 +19,10 @@ with open("/etc/sysctl.conf","a") as f:
     f.write("\nnet.ipv4.ip_forward=1\nnet.ipv6.conf.all.forwarding=1")
 interface  = os.popen('ip route list default').readlines()[0]
 interface=interface[interface.find("dev"):interface.find("proto")].replace(" ","")
-with open("/etc/wireguard/wg0.conf","a") as f:
-    f.write('''
-PostUp = ufw route allow in on wg0 out on '''+interface+'''
-PostUp = iptables -t nat -I POSTROUTING -o '''+interface+''' -j MASQUERADE
-PostUp = ip6tables -t nat -I POSTROUTING -o '''+interface+''' -j MASQUERADE
-PreDown = ufw route delete allow in on wg0 out on '''+interface+'''
-PreDown = iptables -t nat -D POSTROUTING -o '''+interface+''' -j MASQUERADE
-PreDown = ip6tables -t nat -D POSTROUTING -o '''+interface+''' -j MASQUERADE
-    ''')
+
 cmd("sudo ufw allow 1314/udp")
 cmd("sudo systemctl enable wg-quick@wg0.service")
+cmd("sudo systemctl start wg-quick@wg0.service")
 cpk  = os.popen('wg genkey').readlines()[0]
 ip=requests.get("https://ifconfig.me").content.decode("utf-8")
 a='''
@@ -43,5 +36,7 @@ PublicKey = '''+sk+'''
 AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = '''+ip+''':1314
 '''
+cmd("sudo wg set wg0 peer "+cpk+" allowed-ips 10.8.0.2,fd0d:86fa:c3bc::2")
 with open("client.conf","w") as f:
     f.write(a)
+
